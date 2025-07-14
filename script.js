@@ -135,33 +135,28 @@ async function renderizarPokemon(pokemonId, pokemon, eJogador) {
         let resposta = await fetch(url);
         let detalhes = await resposta.json();
         let dano = detalhes['power'];
+        let danoAtaque;
         let alcanceDano = detalhes['damage_class']['name'];
         let tipagemDano = detalhes['type']['name'];
+
         if (dano == null) {
             dano = 0;
-        }
+        } 
+        
         if (alcanceDano == 'special') {
-            danoAtaque[posicao] = Math.round((pokemon.baseStatSpcAtk * dano) / 100);
+            danoAtaque = Math.round((pokemon.baseStatSpcAtk * dano) / 100);
+            alcanceDano = 'especial';
         } else {
-            danoAtaque[posicao] = Math.round((pokemon.baseStatAtk * dano) / 100);
+            danoAtaque = Math.round((pokemon.baseStatAtk * dano) / 100);
+            alcanceDano = 'fisico';
         }
-        nomeAtaque[posicao] = nome;
-        pokemon.ataques[`ataque${i + 1}`].nome = 
-        pokemon.ataques[`ataque${i + 1}`].dano = 
-        pokemon.ataques[`ataque${i + 1}`].tipo = 
-        pokemon.ataques[`ataque${i + 1}`].nome
+
+        pokemon.ataques[`ataque${posicao + 1}`].nome = nome;
+        pokemon.ataques[`ataque${posicao + 1}`].dano = danoAtaque;
+        pokemon.ataques[`ataque${posicao + 1}`].tipo = tipagemDano;
+        pokemon.ataques[`ataque${posicao + 1}`].alcance = alcanceDano;
         posicao++;
     }
-
-    pokemon.ataques.ataque1.nome = nomeAtaque[0];
-    pokemon.ataques.ataque2.nome = nomeAtaque[1];
-    pokemon.ataques.ataque3.nome = nomeAtaque[2];
-    pokemon.ataques.ataque4.nome = nomeAtaque[3];
-
-    pokemon.ataques.ataque1.dano = danoAtaque[0];
-    pokemon.ataques.ataque2.dano = danoAtaque[1];
-    pokemon.ataques.ataque3.dano = danoAtaque[2];
-    pokemon.ataques.ataque4.dano = danoAtaque[3];
 }
 
 function aleatorizar4Ataques(ataques, nivel) {
@@ -546,9 +541,19 @@ function mostrarItensBolsa() {
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
-async function alterarBarraVidaPokemon(dano, pokemonAtacado, barraVida, eJogador) {
+async function alterarBarraVidaPokemon(ataque, pokemonAtacado, barraVida, eJogador) {
+    let vidaRestante;
+    let dano;
 
-    if((pokemonAtacado.hpAtual - dano) <= 0) {
+    if (ataque.alcance == 'fisico') {
+        dano = Math.round(((pokemonAtacado.baseStatDfs*ataque.dano) / 100));
+    } else {
+        dano = Math.round(((pokemonAtacado.baseStatSpcDfs*ataque.dano) / 100));
+    }
+
+    vidaRestante = pokemonAtacado.hpAtual - dano;
+
+    if(vidaRestante <= 0) {
         if (eJogador) {
             await renderizarPokemon(pokemonAleatorio(), equipeAdversario, false);
             entrarEmCombate(null);
@@ -558,7 +563,7 @@ async function alterarBarraVidaPokemon(dano, pokemonAtacado, barraVida, eJogador
         return;
     }
 
-    const porcentagemVida = Math.round(((pokemonAtacado.hpAtual - dano) / pokemonAtacado.hpMax)*100);
+    const porcentagemVida = Math.round((vidaRestante / pokemonAtacado.hpMax)*100);
 
     if (porcentagemVida > 20 && porcentagemVida <= 50) {
         barraVida.style.backgroundColor = 'yellow';
@@ -569,22 +574,20 @@ async function alterarBarraVidaPokemon(dano, pokemonAtacado, barraVida, eJogador
 
     const pixelBarraVida = getComputedStyle(barraVida).width.slice(0, -2);
 
-    const pixelVidaAtual = Math.round(((pokemonAtacado.hpAtual - dano) / pokemonAtacado.hpMax)*pixelBarraVida);
+    const pixelVidaAtual = Math.round((vidaRestante / pokemonAtacado.hpMax)*pixelBarraVida);
 
     barraVida.style.width = `${pixelVidaAtual}px`;
 
-    console.log(dano);
-    console.log(pixelBarraVida)
-    console.log(pixelVidaAtual)
+    console.log(vidaRestante);
     
-    pokemonAtacado.hpAtual -= dano;
+    pokemonAtacado.hpAtual = vidaRestante;
 }
 
 function criarHTMLAtaquesPokemon(pokemon) {
     let button1 = document.createElement('button');
     button1.addEventListener('click', () => {
         const barraVidaAdversario = document.querySelector('.pokemon_adversario .barra_vida');
-        alterarBarraVidaPokemon(pokemon.ataques.ataque1.dano, equipeAdversario, barraVidaAdversario, true);
+        alterarBarraVidaPokemon(pokemon.ataques.ataque1, equipeAdversario, barraVidaAdversario, true);
     });
     let span1 = document.createElement('span');
     span1.textContent = pokemon.ataques.ataque1.nome;
@@ -593,7 +596,7 @@ function criarHTMLAtaquesPokemon(pokemon) {
     let button2 = document.createElement('button');
     button2.addEventListener('click', () => {
         const barraVidaAdversario = document.querySelector('.pokemon_adversario .barra_vida');
-        alterarBarraVidaPokemon(pokemon.ataques.ataque2.dano, equipeAdversario, barraVidaAdversario, true);
+        alterarBarraVidaPokemon(pokemon.ataques.ataque2, equipeAdversario, barraVidaAdversario, true);
     });
     let span2 = document.createElement('span');
     span2.textContent = pokemon.ataques.ataque2.nome;
@@ -602,7 +605,7 @@ function criarHTMLAtaquesPokemon(pokemon) {
     let button3 = document.createElement('button');
     button3.addEventListener('click', () => {
         const barraVidaAdversario = document.querySelector('.pokemon_adversario .barra_vida');
-        alterarBarraVidaPokemon(pokemon.ataques.ataque3.dano, equipeAdversario, barraVidaAdversario, true);
+        alterarBarraVidaPokemon(pokemon.ataques.ataque3, equipeAdversario, barraVidaAdversario, true);
     });
     let span3 = document.createElement('span');
     span3.textContent = pokemon.ataques.ataque3.nome;
@@ -611,7 +614,7 @@ function criarHTMLAtaquesPokemon(pokemon) {
     let button4 = document.createElement('button');
     button4.addEventListener('click', () => {
         const barraVidaAdversario = document.querySelector('.pokemon_adversario .barra_vida');
-        alterarBarraVidaPokemon(pokemon.ataques.ataque4.dano, equipeAdversario, barraVidaAdversario, true);
+        alterarBarraVidaPokemon(pokemon.ataques.ataque4, equipeAdversario, barraVidaAdversario, true);
     });
     let span4 = document.createElement('span');
     span4.textContent = pokemon.ataques.ataque4.nome;
