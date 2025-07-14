@@ -18,10 +18,13 @@ const bolsaJogador = [
     { nome:'dinheiro', quantidade:'1000' },
     { nome:'pokeball', quantidade:'100' },
     { nome:'greatball', quantidade:'0' },
-    { nome:'ultraball', quantidade:'0' }
+    { nome:'ultraball', quantidade:'10' }
 ];
 
 let pokemonJogadorAtualCombate = 0;
+
+renderizarPokemon('1', equipeAdversario, false);
+renderizarPokemon('1', equipeJogador[0], true).then(() =>entrarEmCombate(0));
 
 
 
@@ -56,13 +59,13 @@ function criarPokemon() {
             ataque2: criarAtaque(),
             ataque3: criarAtaque(),
             ataque4: criarAtaque(),
-        }
+        },
+        baseStatAtk: '',
+        baseStatSpcAtk: '',
+        baseStatDfs: '',
+        baseStatSpcDfs: ''
     };
 }
-
-
-renderizarPokemon('1', equipeAdversario, false);
-renderizarPokemon('1', equipeJogador[0], true).then(() =>entrarEmCombate(0));
 
 
 
@@ -85,14 +88,12 @@ renderizarPokemon('1', equipeJogador[0], true).then(() =>entrarEmCombate(0));
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 function aleatorizarSexoPokemon() {
-    const numero = Math.floor(Math.random() * 2);
-    return (numero == 0) ? 'F' : 'M';
+    const numeroAleatorio = Math.floor(Math.random() * 2);
+    return (numeroAleatorio == 0) ? 'F' : 'M';
 }
 
 function ajustarTamanhoPokemon(alturaPokemon, imagemPokemon, eJogador) {
-    let pixelImagem;
-
-    pixelImagem = eJogador ? alturaPokemon + 95 : alturaPokemon + 60;
+    let pixelImagem = eJogador ? alturaPokemon + 95 : alturaPokemon + 60;
 
     imagemPokemon.onload = () => {
         imagemPokemon.style.height = `${pixelImagem}px`
@@ -110,7 +111,7 @@ async function renderizarPokemon(pokemonId, pokemon, eJogador) {
 
     pokemon.nome = dados.name;
     pokemon.id = dados.id;
-    pokemon.nivel = 0;
+    pokemon.nivel = Math.floor(Math.random() * 101);
     pokemon.altura = dados.height;
     pokemon.sexo = aleatorizarSexoPokemon();
     if (eJogador) {
@@ -122,16 +123,72 @@ async function renderizarPokemon(pokemonId, pokemon, eJogador) {
     pokemon.hpMax = dados.stats['0']['base_stat'];
     pokemon.hpAtual = pokemon.hpMax;
     pokemon.tipoBall = 'pokeball';
+    pokemon.baseStatAtk = dados['stats'][1]['base_stat'];
+    pokemon.baseStatSpcAtk = dados['stats'][3]['base_stat'];
+    pokemon.baseStatDfs = dados['stats'][2]['base_stat'];
+    pokemon.baseStatSpcDfs = dados['stats'][4]['base_stat'];
 
-    pokemon.ataques.ataque1.nome = 'fraco';
-    pokemon.ataques.ataque2.nome = 'mais ou menos';
-    pokemon.ataques.ataque3.nome = 'forte';
-    pokemon.ataques.ataque4.nome = 'muito forte';
+    let urlPorNome = aleatorizar4Ataques(dados['moves'], pokemon.nivel);
+    let posicao = 0;
 
-    pokemon.ataques.ataque1.dano = '5';
-    pokemon.ataques.ataque2.dano = '10';
-    pokemon.ataques.ataque3.dano = '20';
-    pokemon.ataques.ataque4.dano = '50';
+    for (let [nome, url] of Object.entries(urlPorNome)) {
+        let resposta = await fetch(url);
+        let detalhes = await resposta.json();
+        let dano = detalhes['power'];
+        let alcanceDano = detalhes['damage_class']['name'];
+        let tipagemDano = detalhes['type']['name'];
+        if (dano == null) {
+            dano = 0;
+        }
+        if (alcanceDano == 'special') {
+            danoAtaque[posicao] = Math.round((pokemon.baseStatSpcAtk * dano) / 100);
+        } else {
+            danoAtaque[posicao] = Math.round((pokemon.baseStatAtk * dano) / 100);
+        }
+        nomeAtaque[posicao] = nome;
+        pokemon.ataques[`ataque${i + 1}`].nome = 
+        pokemon.ataques[`ataque${i + 1}`].dano = 
+        pokemon.ataques[`ataque${i + 1}`].tipo = 
+        pokemon.ataques[`ataque${i + 1}`].nome
+        posicao++;
+    }
+
+    pokemon.ataques.ataque1.nome = nomeAtaque[0];
+    pokemon.ataques.ataque2.nome = nomeAtaque[1];
+    pokemon.ataques.ataque3.nome = nomeAtaque[2];
+    pokemon.ataques.ataque4.nome = nomeAtaque[3];
+
+    pokemon.ataques.ataque1.dano = danoAtaque[0];
+    pokemon.ataques.ataque2.dano = danoAtaque[1];
+    pokemon.ataques.ataque3.dano = danoAtaque[2];
+    pokemon.ataques.ataque4.dano = danoAtaque[3];
+}
+
+function aleatorizar4Ataques(ataques, nivel) {
+    let ataquePorNome = {};
+
+    ataques.forEach(ataque => {
+        let nivelQueAprendeOGolpe = ataque['version_group_details'][0]['level_learned_at'];
+        if (nivel >= nivelQueAprendeOGolpe) {
+            ataquePorNome[ataque['move']['name']] = ataque['move']['url'];
+        }
+    });
+
+    let chaves = Object.keys(ataquePorNome);
+
+    for (let i = chaves.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [chaves[i], chaves[j]] = [chaves[j], chaves[i]];
+    }
+
+    let chavesAleatorias = chaves.slice(0, 4);
+
+    let resultado = {};
+    chavesAleatorias.forEach(chave => {
+        resultado[chave] = ataquePorNome[chave];
+    });
+
+    return resultado;
 }
 
 
@@ -143,17 +200,20 @@ function entrarEmCombate(pokemonJogador) {
     const nomeJogador = document.querySelector('.pokemon_jogador .nome');
     const vidaMaximaJogador = document.querySelector('.pokemon_jogador .contador_vida_maxima');
     const vidaAtualJogador = document.querySelector('.pokemon_jogador .contador_vida_atual');
+    const nivelJogador = document.querySelector('.pokemon_jogador .nivel');
     const sexoJogador = document.querySelector('.pokemon_jogador .sexo');
     const imagemJogador = document.querySelector('.pokemon_jogador .imagem');
 
     const nomeAdversario = document.querySelector('.pokemon_adversario .nome');
     let vidaMaximaAdversario = 0;
     let vidaAtualAdversario = 0;
+    const nivelAdversario = document.querySelector('.pokemon_adversario .nivel');
     const sexoAdversario = document.querySelector('.pokemon_adversario .sexo');
     const imagemAdversario = document.querySelector('.pokemon_adversario .imagem');
 
     if (pokemonJogador !== null) {
         nomeJogador.textContent = equipeJogador[pokemonJogador].nome;
+        nivelJogador.textContent = equipeJogador[pokemonJogador].nivel;
         sexoJogador.textContent = equipeJogador[pokemonJogador].sexo;
         vidaMaximaJogador.textContent = equipeJogador[pokemonJogador].hpMax;
         vidaAtualJogador.textContent = equipeJogador[pokemonJogador].hpAtual;
@@ -166,6 +226,7 @@ function entrarEmCombate(pokemonJogador) {
     mostradorBallsEquipe();
     
     nomeAdversario.textContent = equipeAdversario.nome;
+    nivelAdversario.textContent = equipeAdversario.nivel;
     sexoAdversario.textContent = equipeAdversario.sexo;
     vidaMaximaAdversario.textContent = equipeAdversario.hpMax;
     vidaAtualAdversario.textContent = equipeAdversario.hpAtual;
@@ -485,23 +546,19 @@ function mostrarItensBolsa() {
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
-async function alterarBarraVidaPokemon(dano, pokemon, barraVida, eJogador) {
-    const pixelBarraVida = getComputedStyle(barraVida).width.slice(0, -2);
+async function alterarBarraVidaPokemon(dano, pokemonAtacado, barraVida, eJogador) {
 
-    const pixelVidaAtual = Math.round(((pokemon.hpAtual - dano) / pokemon.hpMax)*pixelBarraVida);
-
-    barraVida.style.width = `${pixelVidaAtual}px`;
-
-    if((pokemon.hpAtual - dano) <= 0) {
-        if (!eJogador) {
+    if((pokemonAtacado.hpAtual - dano) <= 0) {
+        if (eJogador) {
             await renderizarPokemon(pokemonAleatorio(), equipeAdversario, false);
+            entrarEmCombate(null);
         }
-        barraVida.style.width = `${pixelBarraVida}px`;
+        barraVida.style.width = `71.5%`;
         barraVida.style.backgroundColor = 'green';
         return;
     }
 
-    const porcentagemVida = Math.round(((pokemon.hpAtual - dano) / pokemon.hpMax)*100);
+    const porcentagemVida = Math.round(((pokemonAtacado.hpAtual - dano) / pokemonAtacado.hpMax)*100);
 
     if (porcentagemVida > 20 && porcentagemVida <= 50) {
         barraVida.style.backgroundColor = 'yellow';
@@ -509,8 +566,18 @@ async function alterarBarraVidaPokemon(dano, pokemon, barraVida, eJogador) {
     if (porcentagemVida <= 20) {
         barraVida.style.backgroundColor = 'red';
     }
+
+    const pixelBarraVida = getComputedStyle(barraVida).width.slice(0, -2);
+
+    const pixelVidaAtual = Math.round(((pokemonAtacado.hpAtual - dano) / pokemonAtacado.hpMax)*pixelBarraVida);
+
+    barraVida.style.width = `${pixelVidaAtual}px`;
+
+    console.log(dano);
+    console.log(pixelBarraVida)
+    console.log(pixelVidaAtual)
     
-    pokemon.hpAtual -= dano;
+    pokemonAtacado.hpAtual -= dano;
 }
 
 function criarHTMLAtaquesPokemon(pokemon) {

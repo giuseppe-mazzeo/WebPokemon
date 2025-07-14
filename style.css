@@ -6,9 +6,12 @@
     box-sizing: border-box;
 }
 
+
+
 button {
     cursor: pointer;
 }
+
 
 
 body {
@@ -33,6 +36,10 @@ main {
 }
 
 
+
+/*
+Pokemon adversário
+*/
 
 .container_pokemon {
     position: relative;
@@ -101,6 +108,8 @@ main {
     background-color: green;
     transform: perspective(1000px) rotateX(50deg);
 }
+
+
 
 /*
 Pokemon do jogador
@@ -180,7 +189,6 @@ Pokemon do jogador
 .mostrador_balls_equipe div {
     text-align: center;
 }
-
 
 
 
