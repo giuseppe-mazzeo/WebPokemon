@@ -1,0 +1,259 @@
+@charset "UTF-8";
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+button {
+    cursor: pointer;
+}
+
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: rgba(128, 128, 128, 0.548);
+}
+
+
+
+main {
+    overflow: hidden;
+    width: 500px;
+    max-width: 500px;
+    height: 600px;
+    border: 3px solid black;
+    border-radius: 10px;
+    margin: auto;
+    box-shadow: 4px 4px 1px rgba(0, 0, 0, 0.722);
+}
+
+
+
+.container_pokemon {
+    position: relative;
+    height: 300px;
+    background-color: white;
+}
+
+.pokemon_adversario {
+    position: absolute;
+    top: 50px;
+    left: 40px;
+    width: 210px;
+}
+
+.pokemon_adversario > div:first-child {
+    width: 100%;
+    padding: 5px 10px;
+    border: 3px solid black;
+    border-radius: 10px 0;
+    background-color: rgb(255, 243, 188);
+}
+
+.pokemon_adversario .nome {
+    font-size: 1em;
+    text-transform: uppercase;
+}
+
+.pokemon_adversario .barra_vida {
+    position: relative;
+    z-index: 2;
+    width: 132px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: green;
+    margin-left: 20px;
+}
+
+.pokemon_adversario .barra_vida ~ div {
+    width: 131.3px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: black;
+    margin-top: -7px;
+    margin-left: 20.7px;
+}
+
+.pokemon_adversario .imagem {
+    position: absolute;
+    z-index: 1;
+    top: 50px;
+    right: -110px;
+    width: auto;
+    height: auto;
+    max-height: 110px;
+    transform: translateX(50%);
+}
+
+.campo-batalha {
+    position: relative;
+    top: 10px;
+    right: -240px;
+    width: 160px;
+    height: 120px;
+    border: 5px solid burlywood;
+    border-radius: 90px;
+    background-color: green;
+    transform: perspective(1000px) rotateX(50deg);
+}
+
+/*
+Pokemon do jogador
+*/
+
+.pokemon_jogador {
+    position: absolute;
+    bottom: 20px;
+    left: 40px;
+}
+
+.pokemon_jogador > div {
+    width: 170px;
+    margin-left: -50px;
+    padding: 10px;
+    background-color: gray;
+}
+
+.pokemon_jogador .nome {
+    text-transform: capitalize;
+}
+
+.pokemon_jogador .barra_vida,
+.pokemon_bolsa .barra_vida {
+    position: relative;
+    z-index: 2;
+    width: 132px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: green;
+    margin-left: 20px;
+}
+
+.pokemon_jogador .barra_vida + div,
+.pokemon_bolsa .barra_vida + div {
+    width: 131.3px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: black;
+    margin-top: -7px;
+    margin-left: 20.7px;
+}
+
+.pokemon_jogador .barra_vida + div::before,
+.pokemon_bolsa .barra_vida + div::before {
+    content: 'HP';
+    position: absolute;
+    top: 22.5px;
+    left: -45px;
+}
+
+.pokemon_jogador .imagem {
+    width: auto;
+    height: auto;
+    max-height: 160px;
+}
+
+.pokemon_jogador .motrar_quantidade_vida {
+    text-align: center;
+}
+
+
+
+
+.mostrador_balls_equipe {
+    position: absolute;
+    top: 80px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    column-gap: 10px;
+    width: 130px;
+    height: 20px;
+    background-color: gray;
+}
+
+.mostrador_balls_equipe div {
+    text-align: center;
+}
+
+
+
+
+.container_acoes {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    height: 250px;
+    background-color: orange;
+}
+
+.container_acoes > div:first-child {
+    margin: 0 40%;
+}
+
+.botao_lutar,
+.botao_bolsa,
+.botao_fugir,
+.botao_pokemons {
+    width: 100px;
+    border-radius: 50%;
+    padding: 10px;
+}
+
+.caixa_lutar,
+.caixa_bolsa,
+.caixa_pokemons {
+    position: absolute;
+    top: 0;
+    display: none;
+    width: 480px;
+    height: 230px;
+    border: 2px solid black;
+    margin: 10px;
+}
+
+.caixa_lutar {
+    display: none;
+    flex-wrap: wrap;
+    align-content: center;
+    row-gap: 10px;
+}
+
+.caixa_lutar > button {
+    width: calc(50% - 20px);
+    height: 50px;
+    border: 1px solid black;
+    border-radius: 10px;
+    margin: 10px;
+}
+
+.caixa_bolsa {
+    flex-direction: column;
+}
+
+.caixa_pokemons {
+    display: none;
+    flex-wrap: wrap;
+}
+
+.caixa_pokemons > button {
+    width: calc(50% - 20px);
+    height: 50px;
+    border: 1px solid black;
+    border-radius: 10px;
+    margin: 10px;
+}
+
+.botao_voltar {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    display: none;
+}
